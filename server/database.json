@@ -1,0 +1,178 @@
+{
+  "departments": [
+    {
+      "id": "1",
+      "name": "Tecnologia",
+      "description": "Desenvolvimento e infraestrutura"
+    },
+    {
+      "id": "2",
+      "name": "Design & UX",
+      "description": "Design de produto e experiência do usuário"
+    },
+    {
+      "id": "3",
+      "name": "Marketing",
+      "description": "Comunicação, branding e aquisição"
+    },
+    {
+      "id": "4",
+      "name": "Recursos Humanos",
+      "description": "Gestão de pessoas e talentos"
+    },
+    {
+      "id": "5",
+      "name": "Vendas",
+      "description": "Comercial e relacionamento"
+    }
+  ],
+  "users": [
+    {
+      "id": "u1",
+      "name": "Jeovana",
+      "email": "gerente@gerentask.com",
+      "password": "123",
+      "role": "manager",
+      "departmentId": "1",
+      "verified": 1,
+      "approved": 1
+    },
+    {
+      "id": "u2",
+      "name": "Ana Silva",
+      "email": "ana@gerentask.com",
+      "password": "123",
+      "role": "employee",
+      "departmentId": "2",
+      "verified": 1,
+      "approved": 1
+    },
+    {
+      "id": "u3",
+      "name": "Bruno Ramos",
+      "email": "bruno@gerentask.com",
+      "password": "123",
+      "role": "employee",
+      "departmentId": "1",
+      "verified": 1,
+      "approved": 1
+    },
+    {
+      "id": "u4",
+      "name": "Júlia Costa",
+      "email": "julia@gerentask.com",
+      "password": "123",
+      "role": "employee",
+      "departmentId": "3",
+      "verified": 1,
+      "approved": 1
+    },
+    {
+      "id": "u_1783630005195",
+      "verified": true,
+      "approved": true,
+      "name": "Jeovana",
+      "email": "jeovana@gerentask.com",
+      "password": "123",
+      "role": "employee",
+      "departmentId": "1"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "title": "Redesenhar a tela de login",
+      "description": "Criar um design premium com glassmorphism...",
+      "status": "doing",
+      "priority": "high",
+      "dueDate": "2026-07-15",
+      "departmentId": "2",
+      "assignedToId": "u2",
+      "createdAt": "2026-07-01",
+      "createdById": "u1",
+      "createdBy": "Carlos Santos",
+      "approvalStatus": "approved",
+      "comments": "[{\"id\":\"c1\",\"authorName\":\"Carlos Santos\",\"text\":\"Ana, foque no contraste do glassmorphism no tema escuro.\",\"date\":\"2026-07-02\"}]"
+    },
+    {
+      "id": "t2",
+      "title": "Configurar rotas e contextos React",
+      "description": "Implementar AuthContext e DataContext...",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "2026-07-08",
+      "departmentId": "1",
+      "assignedToId": "u3",
+      "createdAt": "2026-07-02",
+      "createdById": "u1",
+      "createdBy": "Carlos Santos",
+      "approvalStatus": "approved",
+      "comments": "[]"
+    },
+    {
+      "id": "t3",
+      "title": "Desenvolver gráficos no Dashboard",
+      "description": "Integrar a biblioteca Recharts...",
+      "status": "todo",
+      "priority": "medium",
+      "dueDate": "2026-07-20",
+      "departmentId": "1",
+      "assignedToId": "u3",
+      "createdAt": "2026-07-05",
+      "createdById": "u1",
+      "createdBy": "Carlos Santos",
+      "approvalStatus": "approved",
+      "comments": "[]"
+    },
+    {
+      "id": "t4",
+      "title": "Campanha de lançamento do produto",
+      "description": "Elaborar as peças gráficas...",
+      "status": "doing",
+      "priority": "medium",
+      "dueDate": "2026-07-18",
+      "departmentId": "3",
+      "assignedToId": "u4",
+      "createdAt": "2026-07-04",
+      "createdById": "u1",
+      "createdBy": "Carlos Santos",
+      "approvalStatus": "approved",
+      "comments": "[]"
+    },
+    {
+      "id": "t5",
+      "title": "Definir metas de contratação Q3",
+      "description": "Reunião com diretores...",
+      "status": "todo",
+      "priority": "low",
+      "dueDate": "2026-07-30",
+      "departmentId": "4",
+      "assignedToId": "u1",
+      "createdAt": "2026-07-06",
+      "createdById": "u1",
+      "createdBy": "Carlos Santos",
+      "approvalStatus": "approved",
+      "comments": "[]"
+    },
+    {
+      "id": "t_1783630041338",
+      "createdAt": "2026-07-09",
+      "comments": [],
+      "createdById": "u1",
+      "createdBy": "Carlos Santos",
+      "approvalStatus": "approved",
+      "title": "Criar usuário de teste ",
+      "description": "Criar usuário de teste ",
+      "priority": "medium",
+      "dueDate": "2026-07-12",
+      "departmentId": "1",
+      "assignedToIds": [
+        "u1"
+      ],
+      "isPersonal": true,
+      "status": "todo"
+    }
+  ],
+  "deletionHistory": [],
+  "notifications": []
+}
