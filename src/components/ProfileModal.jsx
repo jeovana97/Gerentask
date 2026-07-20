@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { X, Camera, Lock, Save, Trash2 } from 'lucide-react';
@@ -8,7 +9,9 @@ const ProfileModal = ({ onClose }) => {
   const { user, updateCurrentUser } = useAuth();
   const { reloadData } = useData();
 
+  const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [photoPreview, setPhotoPreview] = useState(user?.photo || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -51,8 +54,18 @@ const ProfileModal = ({ onClose }) => {
     try {
       const updates = {};
       if (password) {
+        if (currentPassword !== user.password) {
+          setError('A senha atual está incorreta.');
+          setIsSubmitting(false);
+          return;
+        }
         if (password.length < 6) {
           setError('A nova senha deve ter no mínimo 6 caracteres.');
+          setIsSubmitting(false);
+          return;
+        }
+        if (password !== confirmPassword) {
+          setError('As novas senhas não coincidem.');
           setIsSubmitting(false);
           return;
         }
@@ -78,7 +91,7 @@ const ProfileModal = ({ onClose }) => {
     }
   };
 
-  return (
+  const modalContent = (
     <div className="modal-overlay" style={{ zIndex: 9999 }}>
       <div className="modal-content animate-slide-up" style={{ maxWidth: '450px' }}>
         <div className="modal-header">
@@ -142,18 +155,49 @@ const ProfileModal = ({ onClose }) => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Lock size={16} /> Nova Senha (Opcional)
-            </label>
-            <input
-              type="password"
-              className="form-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Deixe em branco para não alterar"
-              minLength={6}
-            />
+          <div className="form-group" style={{ padding: '16px', background: 'var(--bg-card-hover)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Lock size={16} /> Alterar Senha (Opcional)
+            </h4>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', marginBottom: '4px', display: 'block', color: 'var(--text-secondary)' }}>Senha Atual</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Necessária apenas se for alterar a senha"
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', marginBottom: '4px', display: 'block', color: 'var(--text-secondary)' }}>Nova Senha</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Deixe em branco para não alterar"
+                  minLength={6}
+                />
+              </div>
+
+              {password && (
+                <div className="animate-slide-up">
+                  <label style={{ fontSize: '0.8rem', marginBottom: '4px', display: 'block', color: 'var(--text-secondary)' }}>Repetir Nova Senha</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repita a nova senha"
+                    minLength={6}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="modal-footer" style={{ marginTop: '32px' }}>
@@ -169,6 +213,8 @@ const ProfileModal = ({ onClose }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default ProfileModal;

@@ -8,17 +8,22 @@ const Header = ({ activePage, setActivePage }) => {
   const { user, logout } = useAuth();
   const { departments, notifications, markNotificationAsRead, allTasks, setFocusedTaskId } = useData();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const dropdownRef = useRef(null);
+  const profileDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setIsProfileDropdownOpen(false);
+      }
     };
 
-    if (isDropdownOpen) {
+    if (isDropdownOpen || isProfileDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -27,7 +32,7 @@ const Header = ({ activePage, setActivePage }) => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isProfileDropdownOpen]);
 
   const handleNotificationClick = (notif) => {
     if (!notif.read) {
@@ -282,49 +287,98 @@ const Header = ({ activePage, setActivePage }) => {
           <span>{getFormattedDate()}</span>
         </div>
 
-        {/* Meu Perfil */}
-        <button 
-          onClick={() => setShowProfileModal(true)}
-          className="btn btn-secondary"
-          style={{ 
-            padding: '6px 12px',
-            color: 'var(--text-secondary)',
-            borderColor: 'transparent',
-            background: 'var(--bg-card-hover)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            borderRadius: '6px',
-            fontSize: '0.85rem',
-            marginLeft: '16px'
-          }}
-          title="Meu Perfil"
-        >
-          <User size={16} />
-          <span style={{ fontWeight: '500' }}>Meu Perfil</span>
-        </button>
+        {/* Meu Perfil Dropdown */}
+        <div style={{ position: 'relative', marginLeft: '16px' }} ref={profileDropdownRef}>
+          <button 
+            onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+            className="btn btn-secondary"
+            style={{ 
+              padding: '6px 12px',
+              color: 'var(--text-secondary)',
+              borderColor: 'transparent',
+              background: isProfileDropdownOpen ? 'rgba(255,255,255,0.05)' : 'var(--bg-card-hover)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+              transition: 'background 0.2s'
+            }}
+            title="Meu Perfil"
+          >
+            <User size={16} />
+            <span style={{ fontWeight: '500' }}>Meu Perfil</span>
+          </button>
 
-        {/* Logout */}
-        <button 
-          onClick={logout}
-          className="btn btn-secondary"
-          style={{ 
-            padding: '6px 12px',
-            color: 'var(--danger)',
-            borderColor: 'transparent',
-            background: 'rgba(239, 68, 68, 0.05)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            borderRadius: '6px',
-            fontSize: '0.85rem',
-            marginLeft: '8px'
-          }}
-          title="Sair da Conta"
-        >
-          <LogOut size={16} />
-          <span style={{ fontWeight: '500' }}>Sair</span>
-        </button>
+          {isProfileDropdownOpen && (
+            <div className="animate-slide-up" style={{
+              position: 'absolute',
+              top: '40px',
+              right: '0',
+              width: '180px',
+              backgroundColor: 'var(--bg-solid-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              zIndex: 101,
+              padding: '4px'
+            }}>
+              <button
+                onClick={() => {
+                  setShowProfileModal(true);
+                  setIsProfileDropdownOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 12px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  borderRadius: '6px',
+                  width: '100%',
+                  fontSize: '0.85rem'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <User size={16} />
+                Editar Perfil
+              </button>
+              
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0' }} />
+
+              <button
+                onClick={logout}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 12px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--danger)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  borderRadius: '6px',
+                  width: '100%',
+                  fontSize: '0.85rem'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <LogOut size={16} />
+                Sair da Conta
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Renderiza o modal se estiver aberto */}

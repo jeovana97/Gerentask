@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -17,7 +17,8 @@ import {
   X,
   Inbox,
   ShieldAlert,
-  Send
+  Send,
+  Archive
 } from 'lucide-react';
 
 const Tasks = ({ isPersonalOnly = false }) => {
@@ -108,6 +109,32 @@ const Tasks = ({ isPersonalOnly = false }) => {
 
   // Campo de novos comentários
   const [newCommentText, setNewCommentText] = useState('');
+
+  const [taskLastViewed, setTaskLastViewed] = useState(null);
+  const unreadMarkerRef = useRef(null);
+  const commentsEndRef = useRef(null);
+
+  useEffect(() => {
+    if (isDetailModalOpen && selectedTask) {
+      const key = `task_last_viewed_${user.id}_${selectedTask.id}`;
+      const lastViewedStr = localStorage.getItem(key);
+      setTaskLastViewed(lastViewedStr ? new Date(lastViewedStr) : null);
+      
+      // Atualiza imediatamente para a próxima vez
+      localStorage.setItem(key, new Date().toISOString());
+
+      // Pequeno delay para garantir a renderização antes do scroll
+      setTimeout(() => {
+        if (unreadMarkerRef.current) {
+          unreadMarkerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (commentsEndRef.current) {
+          commentsEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 300);
+    } else {
+      setTaskLastViewed(null);
+    }
+  }, [isDetailModalOpen, selectedTask?.id, user.id]);
 
   // Anexos no formulário
   const [pendingAttachments, setPendingAttachments] = useState([]);
@@ -447,7 +474,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
   return (
     <div className="page-container animate-fade-in">
       {/* Header interno */}
-      <div className="flex-between" style={{ marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-primary)' }}>
             Quadro de Tarefas
@@ -462,13 +489,15 @@ const Tasks = ({ isPersonalOnly = false }) => {
             onClick={() => { setShowArchived(!showArchived); setShowDeleted(false); }}
             className={`btn ${showArchived ? 'btn-primary' : 'btn-secondary'}`}
           >
-            {showArchived ? 'Ocultar Arquivadas' : 'Ver Arquivadas'}
+            <Archive size={18} />
+            <span>{showArchived ? 'Ocultar Arquivadas' : 'Ver Arquivadas'}</span>
           </button>
           <button
             onClick={() => { setShowDeleted(!showDeleted); setShowArchived(false); }}
             className={`btn ${showDeleted ? 'btn-primary' : 'btn-secondary'}`}
           >
-            {showDeleted ? 'Ocultar Excluídas' : 'Mostrar Excluídas'}
+            <Trash2 size={18} />
+            <span>{showDeleted ? 'Ocultar Excluídas' : 'Mostrar Excluídas'}</span>
           </button>
           {!isPersonalOnly && (
             <button
@@ -1363,7 +1392,15 @@ const Tasks = ({ isPersonalOnly = false }) => {
                       <span className="badge badge-high" style={{ marginTop: '4px', background: 'var(--bg-dark)' }}>Somente Leitura</span>
                     ) : selectedTask.approvalStatus === 'pending' && isManager && (user.role === 'master' || users.find(u => u.id === selectedTask.createdById)?.departmentId === user.departmentId) ? (
                       <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-                        <button onClick={() => { updateTask(selectedTask.id, { approvalStatus: 'rejected' }); setIsDetailModalOpen(false); }} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', color: 'var(--danger)' }}>Rejeitar</button>
+                        <button onClick={async () => {
+                          const reason = await confirm.prompt(`Qual o motivo da rejeição da tarefa "${selectedTask.title}"?`, true);
+                          if (reason !== null && reason.trim() !== '') {
+                            updateTask(selectedTask.id, { approvalStatus: 'rejected', rejectionReason: reason.trim() });
+                            setIsDetailModalOpen(false);
+                          } else if (reason !== null) {
+                            confirm.alert('O motivo da rejeição é obrigatório.');
+                          }
+                        }} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', color: 'var(--danger)' }}>Rejeitar</button>
                         <button onClick={() => { updateTask(selectedTask.id, { approvalStatus: 'approved' }); setIsDetailModalOpen(false); }} className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Aprovar</button>
                       </div>
                     ) : (!selectedTask.isPersonal && selectedTask.createdById === user.id && selectedTask.departmentId !== user.departmentId) ? (
@@ -1410,38 +1447,65 @@ const Tasks = ({ isPersonalOnly = false }) => {
                 </h4>
 
                 {/* Lista de Comentários */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '200px', overflowY: 'auto', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '200px', overflowY: 'auto', marginBottom: '16px', scrollBehavior: 'smooth' }}>
                   {selectedTask.comments && selectedTask.comments.length > 0 ? (
-                    [...selectedTask.comments].sort((a, b) => new Date(a.date) - new Date(b.date)).map(c => {
-                      const isMine = c.authorName === user.name;
+                    (() => {
+                      let hasShownUnreadMarker = false;
+                      const sortedComments = [...selectedTask.comments].sort((a, b) => new Date(a.date) - new Date(b.date));
+                      
                       return (
-                        <div key={c.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', marginBottom: '8px' }}>
-                          {!isMine && (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '8px' }}>
-                              {c.authorName}
-                            </span>
-                          )}
-                          <div style={{
-                            maxWidth: '85%',
-                            padding: '10px 14px',
-                            borderRadius: '16px',
-                            borderBottomRightRadius: isMine ? '4px' : '16px',
-                            borderBottomLeftRadius: !isMine ? '4px' : '16px',
-                            background: isMine ? 'var(--accent-primary)' : 'rgba(255,255,255,0.03)',
-                            color: isMine ? '#fff' : 'var(--text-primary)',
-                            border: isMine ? 'none' : '1px solid var(--border-color)',
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-                          }}>
-                            <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>{c.text}</p>
-                            <div style={{ textAlign: 'right', marginTop: '4px' }}>
-                              <span style={{ fontSize: '0.65rem', color: isMine ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)' }}>
-                                {new Date(c.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                        <>
+                          {sortedComments.map(c => {
+                            const isMine = c.authorName === user.name;
+                            const isUnread = !isMine && taskLastViewed && new Date(c.date) > taskLastViewed;
+                            
+                            let unreadMarker = null;
+                            if (isUnread && !hasShownUnreadMarker) {
+                              hasShownUnreadMarker = true;
+                              unreadMarker = (
+                                <div ref={unreadMarkerRef} key={`unread-${c.id}`} style={{ display: 'flex', alignItems: 'center', margin: '16px 0 8px 0' }}>
+                                  <div style={{ flex: 1, height: '1px', background: 'var(--accent-primary)', opacity: 0.3 }} />
+                                  <span style={{ padding: '0 12px', fontSize: '0.7rem', color: 'var(--accent-primary)', fontWeight: 'bold', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '12px' }}>NÃO LIDOS</span>
+                                  <div style={{ flex: 1, height: '1px', background: 'var(--accent-primary)', opacity: 0.3 }} />
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <React.Fragment key={c.id}>
+                                {unreadMarker}
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', marginBottom: '8px' }}>
+                                  {!isMine && (
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '8px' }}>
+                                      {c.authorName}
+                                    </span>
+                                  )}
+                                  <div style={{
+                                    maxWidth: '85%',
+                                    padding: '10px 14px',
+                                    borderRadius: '16px',
+                                    borderBottomRightRadius: isMine ? '4px' : '16px',
+                                    borderBottomLeftRadius: !isMine ? '4px' : '16px',
+                                    background: isMine ? 'var(--accent-primary)' : 'rgba(255,255,255,0.03)',
+                                    color: isMine ? '#fff' : 'var(--text-primary)',
+                                    border: isMine ? 'none' : '1px solid var(--border-color)',
+                                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                                  }}>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>{c.text}</p>
+                                    <div style={{ textAlign: 'right', marginTop: '4px' }}>
+                                      <span style={{ fontSize: '0.65rem', color: isMine ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)' }}>
+                                        {new Date(c.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </React.Fragment>
+                            );
+                          })}
+                          <div ref={commentsEndRef} />
+                        </>
                       );
-                    })
+                    })()
                   ) : (
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '10px 0' }}>
                       Nenhum comentário registrado nesta tarefa.
