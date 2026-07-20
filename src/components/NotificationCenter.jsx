@@ -43,9 +43,10 @@ const playNotificationSound = () => {
 
 const NotificationCenter = ({ setActivePage }) => {
   const { user } = useAuth();
-  const { tasks, allTasks, departments, setFocusedTaskId } = useData();
+  const { tasks, allTasks, departments, setFocusedTaskId, notifications } = useData();
   const [toasts, setToasts] = useState([]);
   const isInitialized = useRef(false);
+  const isNotifInitialized = useRef(false);
 
   // Monitora a chegada de novas tarefas atribuídas ao usuário logado
   useEffect(() => {
@@ -58,8 +59,8 @@ const NotificationCenter = ({ setActivePage }) => {
     
     // Filtra as tarefas que devem notificar o usuário atual (Popup/Toast)
     const relevantTasks = tasks.filter(t => {
-      // Ignora tarefas concluídas, arquivadas ou excluídas
-      if (t.status === 'done' || t.status === 'archived' || t.deletedAt) return false;
+      // Ignora tarefas concluídas, arquivadas, excluídas ou JÁ INICIADAS (doing)
+      if (t.status === 'done' || t.status === 'archived' || t.status === 'doing' || t.deletedAt) return false;
       
       // 1. Tarefa atribuída a ele ou em cópia (e não criada por ele mesmo)
       const isAssigned = (t.assignedToIds?.includes(user.id) || t.ccIds?.includes(user.id)) && t.createdById !== user.id;
@@ -95,13 +96,51 @@ const NotificationCenter = ({ setActivePage }) => {
         addToast(task);
       });
 
-      // Atualiza o localStorage com todos os IDs atribuídos atualmente
-      localStorage.setItem(storageKey, JSON.stringify(currentIds));
-    } else {
-      // Mantém a sincronia no localStorage caso tarefas tenham sido removidas
-      localStorage.setItem(storageKey, JSON.stringify(currentIds));
+      // Mantém a sincronia no localStorage garantindo que nunca "esqueça" as antigas
+      const updatedKnownIds = Array.from(new Set([...knownIds, ...currentIds]));
+      localStorage.setItem(storageKey, JSON.stringify(updatedKnownIds));
+    } else if (tasks.length > 0) {
+      const updatedKnownIds = Array.from(new Set([...knownIds, ...currentIds]));
+      localStorage.setItem(storageKey, JSON.stringify(updatedKnownIds));
     }
   }, [tasks, user]);
+
+  // Monitora atualizações nas notificações do sistema (comentários, alertas, etc)
+  useEffect(() => {
+    if (!user || !notifications) {
+      isNotifInitialized.current = false;
+      return;
+    }
+    
+    const notifStorageKey = `gt_notified_sys_${user.id}`;
+    
+    const myNotifications = notifications.filter(n => n.userIds?.includes(user.id) && !n.read);
+    const currentNotifIds = myNotifications.map(n => n.id);
+    const rawKnownNotifs = localStorage.getItem(notifStorageKey);
+
+    if (!isNotifInitialized.current) {
+      if (!rawKnownNotifs) {
+        localStorage.setItem(notifStorageKey, JSON.stringify(currentNotifIds));
+      }
+      isNotifInitialized.current = true;
+      return;
+    }
+
+    const knownNotifs = JSON.parse(rawKnownNotifs || '[]');
+    const newNotifs = myNotifications.filter(n => !knownNotifs.includes(n.id));
+
+    if (newNotifs.length > 0) {
+      playNotificationSound();
+      newNotifs.forEach(notif => {
+        addSysToast(notif);
+      });
+      const updatedKnownNotifs = Array.from(new Set([...knownNotifs, ...currentNotifIds]));
+      localStorage.setItem(notifStorageKey, JSON.stringify(updatedKnownNotifs));
+    } else if (notifications.length > 0) {
+      const updatedKnownNotifs = Array.from(new Set([...knownNotifs, ...currentNotifIds]));
+      localStorage.setItem(notifStorageKey, JSON.stringify(updatedKnownNotifs));
+    }
+  }, [notifications, user]);
 
   const addToast = (task) => {
     const id = 'toast_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -122,6 +161,27 @@ const NotificationCenter = ({ setActivePage }) => {
     setToasts(prev => [...prev, newToast]);
 
     // Remove automaticamente após 6 segundos
+    setTimeout(() => {
+      removeToast(id);
+    }, 6000);
+  };
+
+  const addSysToast = (notif) => {
+    const id = 'toast_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    const newToast = {
+      id,
+      taskId: notif.taskId,
+      title: notif.title,
+      description: notif.message,
+      priority: notif.priority ? 'high' : 'medium',
+      dept: 'Atualização',
+      isUpdate: true,
+      isExiting: false
+    };
+
+    setToasts(prev => [...prev, newToast]);
+
     setTimeout(() => {
       removeToast(id);
     }, 6000);
@@ -206,7 +266,7 @@ const NotificationCenter = ({ setActivePage }) => {
               }}></div>
               <span className="notification-toast-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Bell size={14} className="text-secondary" />
-                {toast.approvalStatus === 'pending' ? 'Tarefa Pendente de Aprovação' : 'Nova Tarefa Recebida!'}
+                {toast.isUpdate ? 'Tarefa Atualizada' : toast.approvalStatus === 'pending' ? 'Tarefa Pendente de Aprovação' : 'Nova Tarefa Recebida!'}
               </span>
             </div>
           </div>

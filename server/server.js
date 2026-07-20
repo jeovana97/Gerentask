@@ -115,10 +115,10 @@ app.get('/api/users', (req, res) => {
 });
 
 app.post('/api/users', (req, res) => {
-  const { id, name, email, password, role, departmentId, jobTitleId, verified, approved } = req.body;
+  const { id, name, email, password, role, departmentId, jobTitleId, verified, approved, photo } = req.body;
   const createdBy = req.query.createdBy || name || 'Sistema';
-  const stmt = db.prepare("INSERT INTO users (id, name, email, password, role, departmentId, jobTitleId, verified, approved, deletedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)");
-  stmt.run(id, name, email, password, role, departmentId, jobTitleId || null, verified ? 1 : 0, approved ? 1 : 0);
+  const stmt = db.prepare("INSERT INTO users (id, name, email, password, role, departmentId, jobTitleId, verified, approved, photo, deletedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)");
+  stmt.run(id, name, email, password, role, departmentId, jobTitleId || null, verified ? 1 : 0, approved ? 1 : 0, photo || null);
   
   recordInsertionHistory('Usuário', id, name, createdBy);
   
@@ -614,6 +614,6 @@ setInterval(() => {
   }
 }, 15 * 1000);
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Servidor API rodando na porta ${PORT}`);
 });

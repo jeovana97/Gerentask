@@ -326,7 +326,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
         ...prev,
         comments: [
           ...(prev.comments || []),
-          { id: 'tmp_' + Date.now(), authorName: user.name, text: newCommentText, date: new Date().toISOString().split('T')[0] }
+          { id: 'tmp_' + Date.now(), authorName: user.name, text: newCommentText, date: new Date().toISOString() }
         ]
       }));
       
@@ -501,7 +501,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                   <div>
                     <div className="flex-between">
                       <span className={`badge ${getPriorityBadgeClass(t.priority)}`} style={{ fontSize: '0.65rem' }}>Prioridade {getPriorityLabel(t.priority)}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Prazo: {new Date(t.dueDate).toLocaleDateString('pt-BR')}</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Prazo: {t.dueDate.split('-').reverse().join('/')}</span>
                     </div>
                     <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-primary)', marginTop: '8px' }}>{t.title}</h4>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.description}</p>
@@ -729,7 +729,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       <Calendar size={14} />
-                      <span>{new Date(task.dueDate).toLocaleDateString('pt-BR')}</span>
+                      <span>{task.dueDate.split('-').reverse().join('/')}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {!isApproved ? (
@@ -804,7 +804,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       <Calendar size={14} />
-                      <span>{new Date(task.dueDate).toLocaleDateString('pt-BR')}</span>
+                      <span>{task.dueDate.split('-').reverse().join('/')}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={e => e.stopPropagation()}>
                       <span className="badge badge-high" style={{ background: 'var(--bg-dark)' }}>Arquivada</span>
@@ -871,7 +871,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       <Calendar size={14} />
-                      <span>{new Date(task.dueDate).toLocaleDateString('pt-BR')}</span>
+                      <span>{task.dueDate.split('-').reverse().join('/')}</span>
                     </div>
                     {task.deletedBy && (
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -951,7 +951,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: '16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                             <Calendar size={14} />
-                            <span>{new Date(task.dueDate).toLocaleDateString('pt-BR')}</span>
+                            <span>{task.dueDate.split('-').reverse().join('/')}</span>
                           </div>
                           
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={e => e.stopPropagation()}>
@@ -1353,7 +1353,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                   <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Data de Vencimento</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                     <Calendar size={14} className="text-secondary" />
-                    <strong>{new Date(selectedTask.dueDate).toLocaleDateString('pt-BR')}</strong>
+                    <strong>{selectedTask.dueDate.split('-').reverse().join('/')}</strong>
                   </div>
                 </div>
                 <div>
@@ -1412,26 +1412,36 @@ const Tasks = ({ isPersonalOnly = false }) => {
                 {/* Lista de Comentários */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '200px', overflowY: 'auto', marginBottom: '16px' }}>
                   {selectedTask.comments && selectedTask.comments.length > 0 ? (
-                    [...selectedTask.comments].sort((a, b) => new Date(b.date) - new Date(a.date)).map(c => (
-                      <div 
-                        key={c.id} 
-                        style={{
-                          padding: '12px', 
-                          borderRadius: '8px',
-                          background: 'rgba(255,255,255,0.02)',
-                          border: '1px solid var(--border-color)',
-                          fontSize: '0.85rem'
-                        }}
-                      >
-                        <div className="flex-between" style={{ marginBottom: '6px' }}>
-                          <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{c.authorName}</span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {new Date(c.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                    [...selectedTask.comments].sort((a, b) => new Date(a.date) - new Date(b.date)).map(c => {
+                      const isMine = c.authorName === user.name;
+                      return (
+                        <div key={c.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', marginBottom: '8px' }}>
+                          {!isMine && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '8px' }}>
+                              {c.authorName}
+                            </span>
+                          )}
+                          <div style={{
+                            maxWidth: '85%',
+                            padding: '10px 14px',
+                            borderRadius: '16px',
+                            borderBottomRightRadius: isMine ? '4px' : '16px',
+                            borderBottomLeftRadius: !isMine ? '4px' : '16px',
+                            background: isMine ? 'var(--accent-primary)' : 'rgba(255,255,255,0.03)',
+                            color: isMine ? '#fff' : 'var(--text-primary)',
+                            border: isMine ? 'none' : '1px solid var(--border-color)',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                          }}>
+                            <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>{c.text}</p>
+                            <div style={{ textAlign: 'right', marginTop: '4px' }}>
+                              <span style={{ fontSize: '0.65rem', color: isMine ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)' }}>
+                                {new Date(c.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <p style={{ color: 'var(--text-secondary)', lineHeight: '1.4' }}>{c.text}</p>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '10px 0' }}>
                       Nenhum comentário registrado nesta tarefa.
@@ -1585,7 +1595,7 @@ const TaskCard = ({ task, departments, users, onClick, onMove, onEdit, onDelete,
             </div>
           )}
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }} title={`Vencimento: ${new Date(task.dueDate).toLocaleDateString('pt-BR')}`}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }} title={`Vencimento: ${task.dueDate.split('-').reverse().join('/')}`}>
             <Calendar size={12} />
             <span>{task.dueDate.split('-').slice(1).reverse().join('/')}</span>
           </div>

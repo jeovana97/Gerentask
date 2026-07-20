@@ -111,6 +111,12 @@ try {
 }
 
 try {
+  db.prepare('ALTER TABLE users ADD COLUMN photo TEXT;').run();
+} catch (e) {
+  // Column already exists
+}
+
+try {
   db.prepare('ALTER TABLE tasks ADD COLUMN deletedBy TEXT;').run();
 } catch (e) {
   // Column already exists

@@ -198,7 +198,7 @@ const TaskAttachments = ({ taskId, attachments = [], onAdd, onRemove, canEdit = 
                   </div>
                   <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
                     <a
-                      href={'http://localhost:3000' + att.url}
+                      href={`http://${window.location.hostname}:3000` + att.url}
                       download={att.name}
                       onClick={(e) => e.stopPropagation()}
                       title="Baixar"

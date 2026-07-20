@@ -36,6 +36,7 @@ const Team = () => {
   const [memberRole, setMemberRole] = useState('employee');
   const [memberJobTitleId, setMemberJobTitleId] = useState('');
   const [memberDeptId, setMemberDeptId] = useState('');
+  const [memberPhoto, setMemberPhoto] = useState(null);
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,8 +60,9 @@ const Team = () => {
     setMemberEmail('');
     setMemberPassword('123'); // Senha padrão simplificada
     setMemberRole('employee');
-    setMemberJobTitleId(jobTitles[0]?.id || '');
-    setMemberDeptId(departments[0]?.id || '');
+    setMemberJobTitleId('');
+    setMemberDeptId(departments.length > 0 ? departments[0].id : '');
+    setMemberPhoto(null);
     setIsModalOpen(true);
   };
 
@@ -72,7 +74,8 @@ const Team = () => {
     setMemberPassword(member.password);
     setMemberRole(member.role);
     setMemberJobTitleId(member.jobTitleId || '');
-    setMemberDeptId(member.departmentId);
+    setMemberDeptId(member.departmentId || '');
+    setMemberPhoto(member.photo || null);
     setIsModalOpen(true);
   };
 
@@ -95,7 +98,8 @@ const Team = () => {
       password: memberPassword,
       role: finalRole,
       jobTitleId: memberJobTitleId || null,
-      departmentId: memberDeptId
+      departmentId: memberDeptId,
+      photo: memberPhoto
     };
 
     try {
@@ -276,32 +280,40 @@ const Team = () => {
           const displayRole = member.role === 'master' ? 'Administrador' : (memberJobTitle ? memberJobTitle.name : (member.role === 'manager' ? 'Gerente' : 'Funcionário'));
 
           return (
-            <div key={member.id} className="glass-card animate-slide-up" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative' }}>
+            <div key={member.id} className="glass-card animate-slide-up" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
-              {/* Badge de Nível / Excluído */}
-              <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', gap: '8px' }}>
-                {member.deletedAt && (
-                  <span className="badge badge-high" style={{ fontSize: '0.65rem' }}>
-                    Excluído
-                  </span>
-                )}
-                <span className={`badge ${member.role === 'master' ? 'badge-high' : (member.role === 'manager' ? 'badge-medium' : 'badge-doing')}`} style={{ fontSize: '0.65rem' }}>
-                  {displayRole}
-                </span>
-              </div>
-
-              {/* Informações Principais */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div className="avatar-circle" style={{ width: '48px', height: '48px', fontSize: '1.25rem' }}>
-                  {member.name.charAt(0).toUpperCase()}
+              {/* Informações Principais e Badges */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                
+                {/* Avatar e Nome */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0 }}>
+                  {member.photo ? (
+                    <img src={member.photo} alt={member.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                  ) : (
+                    <div className="avatar-circle" style={{ width: '48px', height: '48px', fontSize: '1.25rem', flexShrink: 0 }}>
+                      {member.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ overflow: 'hidden' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: '600', color: 'var(--text-primary)', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      {member.name}
+                    </h3>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <Mail size={12} style={{ flexShrink: 0 }} />
+                      {member.email}
+                    </span>
+                  </div>
                 </div>
-                <div style={{ overflow: 'hidden' }}>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: '600', color: 'var(--text-primary)', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                    {member.name}
-                  </h3>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                    <Mail size={12} />
-                    {member.email}
+
+                {/* Badge de Nível / Excluído */}
+                <div style={{ display: 'flex', gap: '6px', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  {member.deletedAt && (
+                    <span className="badge badge-high" style={{ fontSize: '0.65rem' }}>
+                      Excluído
+                    </span>
+                  )}
+                  <span className={`badge ${member.role === 'master' ? 'badge-high' : (member.role === 'manager' ? 'badge-medium' : 'badge-doing')}`} style={{ fontSize: '0.65rem' }}>
+                    {displayRole}
                   </span>
                 </div>
               </div>
@@ -390,6 +402,35 @@ const Team = () => {
                     className="form-input"
                     required
                   />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Foto de Perfil (Opcional)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {memberPhoto && (
+                      <img src={memberPhoto} alt="Pré-visualização" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setMemberPhoto(reader.result);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      style={{ fontSize: '0.85rem' }}
+                    />
+                    {memberPhoto && (
+                      <button type="button" onClick={() => setMemberPhoto(null)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        Remover Foto
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="form-group">

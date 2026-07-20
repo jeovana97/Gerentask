@@ -130,7 +130,7 @@ export const DataProvider = ({ children }) => {
 
     const newTask = {
       id: 't_' + Date.now(),
-      createdAt: new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString(),
       comments: [],
       createdById: user ? user.id : '',
       createdBy: user ? user.name : 'Sistema',
@@ -220,7 +220,7 @@ export const DataProvider = ({ children }) => {
       id: 'c_' + Date.now(),
       authorName,
       text,
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString()
     };
 
     const updatedComments = [...(task.comments || []), newComment];

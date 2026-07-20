@@ -54,7 +54,7 @@ const Settings = () => {
     setDangerMessage('');
     try {
       // 1. Validar a senha
-      const validRes = await fetch('http://localhost:3000/api/settings/validate-password', {
+      const validRes = await fetch(`http://${window.location.hostname}:3000/api/settings/validate-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: passwordInput })
@@ -76,7 +76,7 @@ const Settings = () => {
       setIsClearing(true);
 
       // 3. Limpar de fato
-      const res = await fetch('http://localhost:3000/api/settings/clear-db', {
+      const res = await fetch(`http://${window.location.hostname}:3000/api/settings/clear-db`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: passwordInput, currentUserId: user.id })

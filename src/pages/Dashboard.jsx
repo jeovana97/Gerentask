@@ -546,7 +546,7 @@ const Dashboard = ({ setActivePage }) => {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                      Prazo: {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+                      Prazo: {task.dueDate.split('-').reverse().join('/')}
                     </span>
                     <span className={`badge badge-${task.status}`} style={{ padding: '6px 12px' }}>
                       {task.status === 'todo' ? 'A Fazer' : task.status === 'doing' ? 'Fazendo' : task.status === 'archived' ? 'Arquivada' : 'Concluída'}

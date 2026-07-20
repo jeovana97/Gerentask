@@ -113,6 +113,13 @@ const Header = ({ activePage, setActivePage }) => {
           {getPageTitle()}
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+          {user.photo ? (
+            <img src={user.photo} alt={user.name} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} />
+          ) : (
+            <div className="avatar-circle" style={{ width: '24px', height: '24px', fontSize: '0.75rem' }}>
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+          )}
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
             Olá, <strong style={{ color: 'var(--text-secondary)' }}>{user.name}</strong>
           </span>
