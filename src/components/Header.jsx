@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { Calendar, ShieldAlert, Bell, Check, Info, AlertTriangle, LogOut } from 'lucide-react';
+import { Calendar, ShieldAlert, Bell, Check, Info, AlertTriangle, LogOut, User } from 'lucide-react';
+import ProfileModal from './ProfileModal';
 
 const Header = ({ activePage, setActivePage }) => {
   const { user, logout } = useAuth();
   const { departments, notifications, markNotificationAsRead, allTasks, setFocusedTaskId } = useData();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -280,6 +282,28 @@ const Header = ({ activePage, setActivePage }) => {
           <span>{getFormattedDate()}</span>
         </div>
 
+        {/* Meu Perfil */}
+        <button 
+          onClick={() => setShowProfileModal(true)}
+          className="btn btn-secondary"
+          style={{ 
+            padding: '6px 12px',
+            color: 'var(--text-secondary)',
+            borderColor: 'transparent',
+            background: 'var(--bg-card-hover)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            borderRadius: '6px',
+            fontSize: '0.85rem',
+            marginLeft: '16px'
+          }}
+          title="Meu Perfil"
+        >
+          <User size={16} />
+          <span style={{ fontWeight: '500' }}>Meu Perfil</span>
+        </button>
+
         {/* Logout */}
         <button 
           onClick={logout}
@@ -302,6 +326,11 @@ const Header = ({ activePage, setActivePage }) => {
           <span style={{ fontWeight: '500' }}>Sair</span>
         </button>
       </div>
+
+      {/* Renderiza o modal se estiver aberto */}
+      {showProfileModal && (
+        <ProfileModal onClose={() => setShowProfileModal(false)} />
+      )}
     </header>
   );
 };

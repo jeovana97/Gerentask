@@ -149,8 +149,14 @@ Enviamos um e-mail para ${email} com o código de validação:
     setVerificationCode(null);
   };
 
+  const updateCurrentUser = (newUserData) => {
+    const updated = { ...user, ...newUserData };
+    localStorage.setItem('gt_current_user', JSON.stringify(updated));
+    setUser(updated);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register, verifyEmail, cancelVerification, pendingUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register, verifyEmail, cancelVerification, pendingUser, updateCurrentUser }}>
       {children}
     </AuthContext.Provider>
   );
