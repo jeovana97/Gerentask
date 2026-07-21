@@ -253,14 +253,14 @@ const History = () => {
                       {Object.keys(item.changes).map(field => {
                         const change = item.changes[field];
                         return (
-                          <div key={field} style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                            <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{field}:</span>
-                            <span style={{ color: 'var(--danger)', textDecoration: 'line-through' }}>
-                              {typeof change.from === 'object' ? JSON.stringify(change.from) : String(change.from || 'Vazio')}
+                          <div key={field} style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
+                            <span style={{ fontWeight: '600', color: 'var(--text-primary)', marginTop: '2px' }}>{field}:</span>
+                            <span style={{ color: 'var(--danger)', textDecoration: 'line-through', wordBreak: 'break-all' }}>
+                              {typeof change.from === 'string' && change.from.startsWith('data:image/') ? '[Imagem]' : typeof change.from === 'object' ? JSON.stringify(change.from) : String(change.from || 'Vazio')}
                             </span>
-                            <ArrowRight size={14} style={{ color: 'var(--text-muted)' }} />
-                            <span style={{ color: 'var(--success)' }}>
-                              {typeof change.to === 'object' ? JSON.stringify(change.to) : String(change.to || 'Vazio')}
+                            <ArrowRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0, marginTop: '4px' }} />
+                            <span style={{ color: 'var(--success)', wordBreak: 'break-all' }}>
+                              {typeof change.to === 'string' && change.to.startsWith('data:image/') ? '[Nova Imagem]' : typeof change.to === 'object' ? JSON.stringify(change.to) : String(change.to || 'Vazio')}
                             </span>
                           </div>
                         );

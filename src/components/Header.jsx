@@ -6,7 +6,7 @@ import ProfileModal from './ProfileModal';
 
 const Header = ({ activePage, setActivePage }) => {
   const { user, logout } = useAuth();
-  const { departments, notifications, markNotificationAsRead, allTasks, setFocusedTaskId } = useData();
+  const { departments, notifications, markNotificationAsRead, allTasks, setFocusedTaskId, jobTitles } = useData();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -56,6 +56,7 @@ const Header = ({ activePage, setActivePage }) => {
   if (!user) return null;
 
   const userDept = departments.find(d => d.id === user.departmentId);
+  const userJobTitle = jobTitles?.find(j => j.id === user.jobTitleId);
   const myNotifications = (notifications || []).filter(n => {
     if (!n.userIds?.includes(user.id)) return false;
     if (n.read) return false; // Não mostra notificações lidas
@@ -135,6 +136,14 @@ const Header = ({ activePage, setActivePage }) => {
               <span style={{ color: 'var(--border-color)' }}>•</span>
               <span className="badge badge-doing" style={{ fontSize: '0.65rem', padding: '2px 8px' }}>
                 {userDept.name}
+              </span>
+            </>
+          )}
+          {userJobTitle && (
+            <>
+              <span style={{ color: 'var(--border-color)' }}>•</span>
+              <span className="badge badge-done" style={{ fontSize: '0.65rem', padding: '2px 8px' }}>
+                {userJobTitle.name}
               </span>
             </>
           )}

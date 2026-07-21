@@ -179,3 +179,16 @@ O sistema agora conta com um modelo persistente de notificações para manter us
 - O componente `Header.jsx` monitora passivamente os eventos e exibe um "badge" vermelho e um menu flutuante.
 - Todas as interceptações (Criação de Tarefa, Alteração de Status, Novos Comentários e Aprovações/Rejeições) são feitas de forma reativa pela central de contexto global (`DataContext.jsx`).
 - Múltiplos usuários designados na mesma tarefa recebem cópias da mesma notificação usando filtragem por `.userIds`.
+
+---
+
+## 10. Engajamento e UX do Usuário
+Recentes aprimoramentos focaram em entregar uma interface mais fluída e contextual:
+- **Marcadores de "Não Lidos" nas Tarefas:** O sistema memoriza localmente (`localStorage`) o último momento em que um usuário abriu os detalhes de uma tarefa. Comentários inseridos após essa data recebem um badge e uma linha divisória de "Não Lidos", com scroll automático até a nova mensagem, melhorando o acompanhamento da thread.
+- **Motivo de Rejeição Obrigatório:** Sempre que o gerente da área recusar a aprovação de uma tarefa, um prompt obrigatório coleta o "Motivo da Rejeição". Este texto é salvo no campo `rejectionReason` e exibido como alerta direto na visualização da tarefa para o criador original.
+- **Cabeçalho Informativo e Otimizado:** O Header simplificou menus de ação (Meu Perfil em Dropdown) e adicionou etiquetas (`badges`) evidenciando a hierarquia corporativa do usuário (exibindo tanto o Departamento quanto o Cargo).
+
+---
+
+## 11. Otimização do Histórico (Logs)
+- A stringificação de objetos no painel de auditoria (`History.jsx`) detecta padrões ilegíveis de sistemas (como envios de imagens e arquivos via string `base64`) ocultando-os do log bruto da interface, convertendo para tags dinâmicas como `[Nova Imagem]`, aplicando também `word-break` nos layouts em grid.
