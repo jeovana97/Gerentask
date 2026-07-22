@@ -410,21 +410,24 @@ const Team = () => {
                     {memberPhoto && (
                       <img src={memberPhoto} alt="Pré-visualização" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                     )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setMemberPhoto(reader.result);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      style={{ fontSize: '0.85rem' }}
-                    />
+                    <label className="btn btn-secondary" style={{ cursor: 'pointer', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center' }}>
+                      Escolher imagem
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setMemberPhoto(reader.result);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
                     {memberPhoto && (
                       <button type="button" onClick={() => setMemberPhoto(null)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8rem' }}>
                         Remover Foto

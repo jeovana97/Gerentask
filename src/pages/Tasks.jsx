@@ -18,7 +18,8 @@ import {
   Inbox,
   ShieldAlert,
   Send,
-  Archive
+  Archive,
+  XCircle
 } from 'lucide-react';
 
 const Tasks = ({ isPersonalOnly = false }) => {
@@ -77,6 +78,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
   const [showDeleted, setShowDeleted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [showSentRequests, setShowSentRequests] = useState(false);
+  const [showRejected, setShowRejected] = useState(false);
 
   // Estados dos modais
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -146,17 +148,21 @@ const Tasks = ({ isPersonalOnly = false }) => {
     : (isPersonalOnly ? tasks.filter(t => t.isPersonal && t.createdById === user.id) : tasks.filter(t => !t.isPersonal));
   
   const filteredTasks = baseTasksList.filter(task => {
-    // Apenas tarefas aprovadas aparecem no Kanban
-    const isApproved = task.approvalStatus === 'approved' || !task.approvalStatus;
-    if (!task.deletedAt && !isApproved) {
-      return false;
-    }
-
-    // Filtro de arquivadas
-    if (showArchived) {
-      if (task.status !== 'archived') return false;
+    if (showRejected) {
+      if (task.approvalStatus !== 'rejected') return false;
     } else {
-      if (task.status === 'archived') return false;
+      // Apenas tarefas aprovadas aparecem no Kanban
+      const isApproved = task.approvalStatus === 'approved' || !task.approvalStatus;
+      if (!task.deletedAt && !isApproved) {
+        return false;
+      }
+
+      // Filtro de arquivadas
+      if (showArchived) {
+        if (task.status !== 'archived') return false;
+      } else {
+        if (task.status === 'archived') return false;
+      }
     }
 
     // Restrição de perfil
@@ -195,6 +201,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
   const doneTasks = filteredTasks.filter(t => t.status === 'done');
   const archivedTasks = filteredTasks.filter(t => t.status === 'archived');
   const deletedTasks = filteredTasks.filter(t => t.deletedAt);
+  const rejectedTasks = filteredTasks.filter(t => t.approvalStatus === 'rejected');
 
   // Função para somar dias úteis
   const addBusinessDays = (startDate, daysToAdd) => {
@@ -486,22 +493,29 @@ const Tasks = ({ isPersonalOnly = false }) => {
         
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
-            onClick={() => { setShowArchived(!showArchived); setShowDeleted(false); }}
+            onClick={() => { setShowArchived(!showArchived); setShowDeleted(false); setShowSentRequests(false); setShowRejected(false); }}
             className={`btn ${showArchived ? 'btn-primary' : 'btn-secondary'}`}
           >
             <Archive size={18} />
             <span>{showArchived ? 'Ocultar Arquivadas' : 'Ver Arquivadas'}</span>
           </button>
           <button
-            onClick={() => { setShowDeleted(!showDeleted); setShowArchived(false); }}
+            onClick={() => { setShowDeleted(!showDeleted); setShowArchived(false); setShowSentRequests(false); setShowRejected(false); }}
             className={`btn ${showDeleted ? 'btn-primary' : 'btn-secondary'}`}
           >
             <Trash2 size={18} />
             <span>{showDeleted ? 'Ocultar Excluídas' : 'Mostrar Excluídas'}</span>
           </button>
+          <button
+            onClick={() => { setShowRejected(!showRejected); setShowDeleted(false); setShowArchived(false); setShowSentRequests(false); }}
+            className={`btn ${showRejected ? 'btn-primary' : 'btn-secondary'}`}
+          >
+            <XCircle size={18} />
+            <span>{showRejected ? 'Ocultar Rejeitadas' : 'Mostrar Rejeitadas'}</span>
+          </button>
           {!isPersonalOnly && (
             <button
-              onClick={() => { setShowSentRequests(!showSentRequests); setShowArchived(false); setShowDeleted(false); }}
+              onClick={() => { setShowSentRequests(!showSentRequests); setShowArchived(false); setShowDeleted(false); setShowRejected(false); }}
               className={`btn ${showSentRequests ? 'btn-primary' : 'btn-secondary'}`}
               title="Tarefas enviadas por você"
             >
@@ -555,7 +569,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                       e.stopPropagation(); 
                       const reason = await confirm.prompt(`Qual o motivo da rejeição da tarefa "${t.title}"?`, true);
                       if (reason !== null && reason.trim() !== '') {
-                        updateTask(t.id, { approvalStatus: 'rejected', rejectionReason: reason.trim() }); 
+                        updateTask(t.id, { approvalStatus: 'rejected', rejectionReason: reason.trim(), rejectedById: user.id }); 
                       } else if (reason !== null) {
                         confirm.alert('O motivo da rejeição é obrigatório.');
                       }
@@ -774,6 +788,80 @@ const Tasks = ({ isPersonalOnly = false }) => {
                   </div>
                 </div>
               )})}
+            </div>
+          )}
+        </div>
+      ) : showRejected ? (
+        <div className="glass-card" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px', color: 'var(--text-primary)' }}>
+            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: 'var(--danger)' }}></span>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Tarefas Rejeitadas ({rejectedTasks.length})</h3>
+          </div>
+          {rejectedTasks.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)' }}>
+              <p>Nenhuma tarefa rejeitada.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {rejectedTasks.map(task => (
+                <div 
+                  key={task.id} 
+                  onClick={() => handleOpenDetails(task)}
+                  style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    padding: '16px', 
+                    background: 'rgba(255,255,255,0.02)', 
+                    border: '1px solid var(--danger)',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      minWidth: '40px',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      background: 'rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <span className={`badge ${getPriorityBadgeClass(task.priority)}`} style={{ padding: '4px', borderRadius: '4px', fontSize: '0.65rem' }} title={`Prioridade ${getPriorityLabel(task.priority)}`}>
+                        {task.priority.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <h4 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {task.title}
+                      </h4>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        Destino: {departments.find(d => d.id === task.departmentId)?.name || 'Geral'}
+                      </p>
+                      {task.rejectionReason && (
+                        <div style={{ marginTop: '8px', fontSize: '0.8rem', background: 'rgba(239, 68, 68, 0.05)', borderLeft: '3px solid var(--danger)', padding: '6px 8px', borderRadius: '4px' }}>
+                          <span style={{ fontWeight: '600', color: 'var(--danger)' }}>Motivo:</span> {task.rejectionReason}
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                            Por: {users.find(u => u.id === task.rejectedById)?.name || 'Gerente do Setor'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      <Calendar size={14} />
+                      <span>{task.dueDate.split('-').reverse().join('/')}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="badge badge-high" style={{ background: 'rgba(239, 68, 68, 0.1)' }}>Rejeitada</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -1395,7 +1483,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                         <button onClick={async () => {
                           const reason = await confirm.prompt(`Qual o motivo da rejeição da tarefa "${selectedTask.title}"?`, true);
                           if (reason !== null && reason.trim() !== '') {
-                            updateTask(selectedTask.id, { approvalStatus: 'rejected', rejectionReason: reason.trim() });
+                            updateTask(selectedTask.id, { approvalStatus: 'rejected', rejectionReason: reason.trim(), rejectedById: user.id });
                             setIsDetailModalOpen(false);
                           } else if (reason !== null) {
                             confirm.alert('O motivo da rejeição é obrigatório.');
