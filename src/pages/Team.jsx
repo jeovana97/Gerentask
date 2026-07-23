@@ -565,28 +565,33 @@ const Team = () => {
                   <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '12px 0' }}>Nenhum cargo cadastrado.</p>
                 ) : (
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {jobTitles.map(jt => (
-                      <li key={jt.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{jt.name}</span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            Permissão: {jt.accessLevel === 'manager' ? 'Gerente' : 'Funcionário Comum'}
-                          </span>
-                        </div>
-                        <button 
-                          onClick={async () => {
-                            if (await confirm(`Deseja excluir o cargo "${jt.name}"? Usuários com este cargo ficarão sem cargo atribuído.`, true)) {
-                              deleteJobTitle(jt.id);
-                            }
-                          }}
-                          className="btn-icon" 
-                          style={{ color: 'var(--danger)', opacity: 0.8 }}
-                          title="Excluir Cargo"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </li>
-                    ))}
+                    {jobTitles.map(jt => {
+                      const isAdmin = jt.name.trim().toLowerCase() === 'administrador';
+                      return (
+                        <li key={jt.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{jt.name}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                              Permissão: {jt.accessLevel === 'manager' ? 'Gerente' : 'Funcionário Comum'}
+                            </span>
+                          </div>
+                          {!isAdmin && (
+                            <button 
+                              onClick={async () => {
+                                if (await confirm(`Deseja excluir o cargo "${jt.name}"? Usuários com este cargo ficarão sem cargo atribuído.`, true)) {
+                                  deleteJobTitle(jt.id);
+                                }
+                              }}
+                              className="btn-icon" 
+                              style={{ color: 'var(--danger)', opacity: 0.8 }}
+                              title="Excluir Cargo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

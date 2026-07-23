@@ -221,6 +221,10 @@ app.delete('/api/job-titles/:id', (req, res) => {
   const jobTitle = db.prepare("SELECT name FROM jobTitles WHERE id = ?").get(id);
   if (!jobTitle) return res.status(404).json({ error: 'Job title not found' });
 
+  if (jobTitle.name.trim().toLowerCase() === 'administrador') {
+    return res.status(400).json({ error: 'O cargo de Administrador não pode ser excluído.' });
+  }
+
   const now = new Date().toISOString();
   db.prepare("UPDATE jobTitles SET deletedAt = ? WHERE id = ?").run(now, id);
   db.prepare("INSERT INTO deletionHistory (id, type, name, deletedBy, date) VALUES (?, ?, ?, ?, ?)").run(

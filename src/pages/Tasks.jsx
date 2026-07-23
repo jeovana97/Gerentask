@@ -55,6 +55,18 @@ const Tasks = ({ isPersonalOnly = false }) => {
     return isOwner || isAssigned;
   };
 
+  // Determina se o usuário pode alterar o status de uma tarefa (A Fazer, Fazer/Em Andamento, Concluída)
+  // Apenas Gerentes ou os Responsáveis Atribuídos podem alterar o status.
+  // O criador (se não for gerente nem responsável) NÃO pode alterar o status.
+  const canChangeStatus = (task) => {
+    if (!task || task.deletedAt || task.status === 'archived') return false;
+    if (isManager) return true;
+    const isAssigned = task.assignedToIds?.includes(user.id);
+    if (isAssigned) return true;
+    if (task.isPersonal && task.createdById === user.id) return true;
+    return false;
+  };
+
   // Abre automaticamente a tarefa focada vinda das notificações
   useEffect(() => {
     if (focusedTaskId) {
@@ -317,6 +329,11 @@ const Tasks = ({ isPersonalOnly = false }) => {
 
     const task = tasks.find(t => t.id === taskId) || allTasks.find(t => t.id === taskId);
     
+    if (task && !canChangeStatus(task)) {
+      confirm.alert("A alteração de status é permitida apenas aos responsáveis atribuídos ou gerentes.");
+      return;
+    }
+
     // Trava de segurança para "Enviadas"
     const isSentRequest = !task.isPersonal && task.createdById === user.id && task.departmentId !== user.departmentId;
     if (isSentRequest) {
@@ -342,7 +359,28 @@ const Tasks = ({ isPersonalOnly = false }) => {
   // Abre detalhes da tarefa
   const handleOpenDetails = (task) => {
     setSelectedTask(task);
+    setNewCommentText('');
     setIsDetailModalOpen(true);
+  };
+
+  // Fecha detalhes da tarefa com verificação de mensagem pendente
+  const handleCloseDetailModal = async () => {
+    if (newCommentText && newCommentText.trim() !== '') {
+      const proceed = await confirm('Existe uma mensagem digitada. Deseja sair e descartar a mensagem?', {
+        danger: true,
+        confirmText: 'Sim',
+        cancelText: 'Não'
+      });
+      if (proceed) {
+        setNewCommentText('');
+        setIsDetailModalOpen(false);
+        setSelectedTask(null);
+      }
+    } else {
+      setNewCommentText('');
+      setIsDetailModalOpen(false);
+      setSelectedTask(null);
+    }
   };
 
   // Adiciona comentário
@@ -1128,6 +1166,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                 onDelete={(e) => handleDeleteTask(task.id, e)}
                 isManager={isManager}
                 canEdit={canEditTask(task)}
+                canChangeStatus={canChangeStatus(task)}
               />
             ))}
             {todoTasks.length === 0 && <EmptyColumnState />}
@@ -1157,6 +1196,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                 onDelete={(e) => handleDeleteTask(task.id, e)}
                 isManager={isManager}
                 canEdit={canEditTask(task)}
+                canChangeStatus={canChangeStatus(task)}
               />
             ))}
             {doingTasks.length === 0 && <EmptyColumnState />}
@@ -1186,6 +1226,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                 onDelete={(e) => handleDeleteTask(task.id, e)}
                 isManager={isManager}
                 canEdit={canEditTask(task)}
+                canChangeStatus={canChangeStatus(task)}
               />
             ))}
             {doneTasks.length === 0 && <EmptyColumnState />}
@@ -1396,7 +1437,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
 
       {/* --- MODAL DE DETALHES E COMENTÁRIOS DA TAREFA --- */}
       {isDetailModalOpen && selectedTask && (
-        <div className="modal-overlay" onMouseDown={() => setIsDetailModalOpen(false)}>
+        <div className="modal-overlay" onMouseDown={handleCloseDetailModal}>
           <div className="modal-content" style={{ maxWidth: '680px' }} onMouseDown={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1407,7 +1448,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                   {selectedTask.status === 'todo' ? 'A Fazer' : selectedTask.status === 'doing' ? 'Fazendo' : selectedTask.status === 'archived' ? 'Arquivada' : 'Concluída'}
                 </span>
               </div>
-              <button onClick={() => setIsDetailModalOpen(false)} className="btn-icon">
+              <button onClick={handleCloseDetailModal} className="btn-icon">
                 <X size={20} />
               </button>
             </div>
@@ -1493,6 +1534,13 @@ const Tasks = ({ isPersonalOnly = false }) => {
                       </div>
                     ) : (!selectedTask.isPersonal && selectedTask.createdById === user.id && selectedTask.departmentId !== user.departmentId) ? (
                       <span className="badge" style={{ marginTop: '4px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>Tarefa de outro setor</span>
+                    ) : !canChangeStatus(selectedTask) ? (
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>Alteração de status restrita aos responsáveis ou gerente</span>
+                        {selectedTask.status !== 'done' && selectedTask.status !== 'archived' && (
+                          <button onClick={handleRequestStatus} className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem', background: 'var(--warning)', color: '#000', border: 'none' }}>Pedir Posicionamento</button>
+                        )}
+                      </div>
                     ) : (
                       <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
                         {selectedTask.status !== 'todo' && (
@@ -1637,7 +1685,19 @@ const Tasks = ({ isPersonalOnly = false }) => {
               <div style={{ display: 'flex', gap: '10px' }}>
                 {canEditTask(selectedTask) && selectedTask.status !== 'archived' && (
                   <button 
-                    onClick={(e) => { setIsDetailModalOpen(false); handleOpenEditModal(selectedTask, e); }}
+                    onClick={async (e) => { 
+                      if (newCommentText && newCommentText.trim() !== '') {
+                        const proceed = await confirm('Existe uma mensagem digitada. Deseja sair e descartar a mensagem?', {
+                          danger: true,
+                          confirmText: 'Sim',
+                          cancelText: 'Não'
+                        });
+                        if (!proceed) return;
+                        setNewCommentText('');
+                      }
+                      setIsDetailModalOpen(false); 
+                      handleOpenEditModal(selectedTask, e); 
+                    }}
                     className="btn btn-secondary"
                     style={{ padding: '8px 16px', fontSize: '0.85rem' }}
                   >
@@ -1645,7 +1705,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
                     <span>Editar</span>
                   </button>
                 )}
-                <button onClick={() => setIsDetailModalOpen(false)} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+                <button onClick={handleCloseDetailModal} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
                   Fechar
                 </button>
               </div>
@@ -1658,7 +1718,7 @@ const Tasks = ({ isPersonalOnly = false }) => {
 };
 
 // Componente do Card de Tarefa
-const TaskCard = ({ task, departments, users, onClick, onMove, onEdit, onDelete, isManager, canEdit = false }) => {
+const TaskCard = ({ task, departments, users, onClick, onMove, onEdit, onDelete, isManager, canEdit = false, canChangeStatus = false }) => {
   const dept = departments.find(d => d.id === task.departmentId);
   const workers = users.filter(u => task.assignedToIds?.includes(u.id));
   
@@ -1755,36 +1815,38 @@ const TaskCard = ({ task, departments, users, onClick, onMove, onEdit, onDelete,
       </div>
 
       {/* Botões Rápidos de Fluxo (facilita muito no celular/tablet) */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          borderTop: '1px solid var(--border-color)', 
-          paddingTop: '8px', 
-          marginTop: '4px'
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {task.status !== 'todo' ? (
-          <button 
-            onClick={() => onMove(task.status === 'done' ? 'doing' : 'todo')} 
-            className="btn btn-secondary" 
-            style={{ padding: '2px 8px', fontSize: '0.65rem', borderRadius: '4px' }}
-          >
-            ← Voltar
-          </button>
-        ) : <div />}
+      {canChangeStatus && (
+        <div 
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            borderTop: '1px solid var(--border-color)', 
+            paddingTop: '8px', 
+            marginTop: '4px'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {task.status !== 'todo' ? (
+            <button 
+              onClick={() => onMove(task.status === 'done' ? 'doing' : 'todo')} 
+              className="btn btn-secondary" 
+              style={{ padding: '2px 8px', fontSize: '0.65rem', borderRadius: '4px' }}
+            >
+              ← Voltar
+            </button>
+          ) : <div />}
 
-        {task.status !== 'done' ? (
-          <button 
-            onClick={() => onMove(task.status === 'todo' ? 'doing' : 'done')} 
-            className="btn btn-primary" 
-            style={{ padding: '2px 8px', fontSize: '0.65rem', borderRadius: '4px' }}
-          >
-            {task.status === 'todo' ? 'Iniciar' : 'Concluir'} →
-          </button>
-        ) : <div />}
-      </div>
+          {task.status !== 'done' ? (
+            <button 
+              onClick={() => onMove(task.status === 'todo' ? 'doing' : 'done')} 
+              className="btn btn-primary" 
+              style={{ padding: '2px 8px', fontSize: '0.65rem', borderRadius: '4px' }}
+            >
+              {task.status === 'todo' ? 'Iniciar' : 'Concluir'} →
+            </button>
+          ) : <div />}
+        </div>
+      )}
     </div>
   );
 };

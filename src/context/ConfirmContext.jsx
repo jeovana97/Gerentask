@@ -14,10 +14,27 @@ export const ConfirmProvider = ({ children }) => {
   const [isAlert, setIsAlert] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
-  const confirm = useCallback((msg, danger = false) => {
+  const [confirmText, setConfirmText] = useState('Confirmar');
+  const [cancelText, setCancelText] = useState('Cancelar');
+
+  const confirm = useCallback((msg, dangerOrOptions = false) => {
     return new Promise((resolve) => {
+      let danger = false;
+      let cText = 'Confirmar';
+      let canText = 'Cancelar';
+
+      if (typeof dangerOrOptions === 'object' && dangerOrOptions !== null) {
+        danger = !!dangerOrOptions.danger;
+        if (dangerOrOptions.confirmText) cText = dangerOrOptions.confirmText;
+        if (dangerOrOptions.cancelText) canText = dangerOrOptions.cancelText;
+      } else {
+        danger = !!dangerOrOptions;
+      }
+
       setMessage(msg);
       setIsDanger(danger);
+      setConfirmText(cText);
+      setCancelText(canText);
       setIsPrompt(false);
       setIsAlert(false);
       setIsOpen(true);
@@ -38,6 +55,8 @@ export const ConfirmProvider = ({ children }) => {
     return new Promise((resolve) => {
       setMessage(msg);
       setIsDanger(danger);
+      setConfirmText('Confirmar');
+      setCancelText('Cancelar');
       setIsPrompt(true);
       setIsAlert(false);
       setInputValue('');
@@ -59,6 +78,8 @@ export const ConfirmProvider = ({ children }) => {
     return new Promise((resolve) => {
       setMessage(msg);
       setIsDanger(danger);
+      setConfirmText('OK');
+      setCancelText('Cancelar');
       setIsPrompt(false);
       setIsAlert(true);
       setIsOpen(true);
@@ -101,7 +122,7 @@ export const ConfirmProvider = ({ children }) => {
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               {!isAlert && (
                 <button className="btn btn-secondary" onClick={() => onCancel()} style={{ padding: '10px 24px' }}>
-                  Cancelar
+                  {cancelText}
                 </button>
               )}
               <button 
@@ -109,7 +130,7 @@ export const ConfirmProvider = ({ children }) => {
                 onClick={() => onConfirm(isPrompt ? inputValue : true)}
                 style={{ padding: '10px 24px', background: isDanger ? 'var(--danger)' : 'var(--accent-primary)' }}
               >
-                {isAlert ? 'OK' : 'Confirmar'}
+                {isAlert ? 'OK' : confirmText}
               </button>
             </div>
           </div>

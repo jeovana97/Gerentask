@@ -251,6 +251,11 @@ export const DataProvider = ({ children }) => {
     await reloadData();
   };
   const deleteJobTitle = async (id) => {
+    const job = jobTitles.find(j => j.id === id);
+    if (job && job.name.trim().toLowerCase() === 'administrador') {
+      confirm.alert('O cargo de Administrador não pode ser excluído.');
+      return;
+    }
     const author = user ? user.name : 'Sistema';
     await api.delete(`/job-titles/${id}?deletedBy=${encodeURIComponent(author)}`);
     const usersToUpdate = users.filter(u => u.jobTitleId === id);
